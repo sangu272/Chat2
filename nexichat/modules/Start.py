@@ -158,7 +158,7 @@ async def welcomejej(client, message: Message):
         logging.info(f"Error: {e}")
 
 
-@nexichat.on_cmd(["start", "aistart"])
+@nexichat.on_cmd(["stgfhart", "aistart"])
 async def start(_, m: Message):
     users = len(await get_served_users())
     chats = len(await get_served_chats())
@@ -221,7 +221,7 @@ async def start(_, m: Message):
         await add_served_chat(m.chat.id)
 
 
-@nexichat.on_cmd("help")
+@nexichat.on_cmd("hehhhhhlp")
 async def help(client: nexichat, m: Message):
     if m.chat.type == ChatType.PRIVATE:
         hmm = await m.reply_photo(
@@ -239,7 +239,7 @@ async def help(client: nexichat, m: Message):
         await add_served_chat(m.chat.id)
 
 
-@nexichat.on_cmd("repo")
+@nexichat.on_cmd("rtyyyggggepo")
 async def repo(_, m: Message):
     await m.reply_text(
         text=SOURCE_READ,
@@ -260,7 +260,7 @@ async def ping(_, message: Message):
 
     ms = (datetime.now() - start).microseconds / 1000
     await loda.edit_text(
-        text=f"нey вαву!!\n{nexichat.name} ᴄʜᴀᴛʙᴏᴛ ιѕ alιve 🥀 αnd worĸιng ғιne wιтн a pιng oғ\n➥ `{ms}` ms\n\n<b>|| мαdє ωιтн ❣️ ву [ᴠɪᴘ ʙᴏʏ](https://t.me/{OWNER_USERNAME}) ||</b>",
+        text=f"нey вαву!!\n{nexichat.name} ᴄʜᴀᴛʙᴏᴛ ιѕ alιve 🥀 αnd worĸιng ғιne wιтн a pιng oғ\n➥ `{ms}` ms\n\n<b>|| мαdє ωιтн ❣️ ву [sarkar](https://t.me/{OWNER_USERNAME}) ||</b>",
         reply_markup=InlineKeyboardMarkup(PNG_BTN),
     )
     if message.chat.type == ChatType.PRIVATE:
@@ -269,7 +269,7 @@ async def ping(_, message: Message):
         await add_served_chat(message.chat.id)
 
 
-@nexichat.on_message(filters.command("stats"))
+@nexichat.on_message(filters.command("stahhhhhhts"))
 async def stats(cli: Client, message: Message):
     users = len(await get_served_users())
     chats = len(await get_served_chats())
