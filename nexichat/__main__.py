@@ -23,10 +23,18 @@ async def anony_boot():
     try:
         await nexichat.set_bot_commands(
             commands=[
-                BotCommand("start", "❍ 𝐒ᴛᴀʀᴛ 𝐓ʜᴇ 𝐁ᴏᴛ ❍"),
-                BotCommand("help", "❍ 𝐆ᴇᴛ 𝐇ᴇʟᴘ 𝐌ᴇɴᴜ ❍"),
-                BotCommand("ping", "❍ 𝐂ʜᴇᴄᴋ 𝐓ʜᴇ 𝐁ᴏᴛ 𝐀ʟɪᴠᴇ 𝐎ʀ 𝐃ᴇᴀᴅ ❍"),
-                    ]
+                BotCommand("start", "Start the bot"),
+                BotCommand("help", "Get the help menu"),
+                BotCommand("ping", "Check if the bot is alive or dead"),
+                BotCommand("lang", "Select bot reply language"),
+                BotCommand("resetlang", "Reset to default bot reply lang"),
+                BotCommand("id", "Get users user_id"),
+                BotCommand("stats", "Check bot stats"),
+                BotCommand("gcast", "Broadcast any message to groups/users"),
+                BotCommand("chatbot", "Enable or disable chatbot"),
+                BotCommand("shayri", "Get random shayri for love"),
+                BotCommand("repo", "Get chatbot source code"),
+            ]
         )
         LOGGER.info("Bot commands set successfully.")
     except Exception as ex:
@@ -36,7 +44,7 @@ async def anony_boot():
     try:
         await nexichat.send_message(int(OWNER_ID), f"{nexichat.mention} has started")
     except Exception as ex:
-        LOGGER.info(f"@{nexichat.first_name} Started, please start the bot from owner id.")
+        LOGGER.info(f"@{nexichat.username} Started, please start the bot from owner id.")
     
     await idle()
 
