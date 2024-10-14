@@ -8,9 +8,10 @@ from config import MONGO_URL
 from nexichat import nexichat
 from nexichat.modules.helpers import CHATBOT_ON
 from pymongo import MongoClient
+from nexichat import mongo, db
 from pyrogram.enums import ChatMemberStatus as CMS
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup
-
+import asyncio
 import config
 from nexichat import LOGGER, nexichat
 from nexichat.modules.helpers import (
@@ -29,13 +30,11 @@ from nexichat.modules.helpers import (
     TOOLS_DATA_READ,
 )
 
-WORD_MONGO_URL = "mongodb+srv://AbhiModszYT:AbhiModszYT@abhimodszyt.flmdtda.mongodb.net/?retryWrites=true&w=majority"
 translator = GoogleTranslator()  
-chatdb = MongoClient(MONGO_URL)
-worddb = MongoClient(WORD_MONGO_URL)
-status_db = chatdb["ChatBotStatusDb"]["StatusCollection"]
-chatai = worddb["Word"]["WordDb"]
-lang_db = chatdb["ChatLangDb"]["LangCollection"]
+status_db = mongo["ChatBotStatusDb"]["StatusCollection"]
+chatai = mongo["Word"]["WordDb"]
+lang_db = mongo["ChatLangDb"]["LangCollection"]
+
 
 
 languages = {
@@ -154,6 +153,14 @@ async def chaton(client: Client, message: Message):
     
 @nexichat.on_message((filters.text | filters.sticker | filters.photo | filters.video | filters.audio))
 async def chatbot_response(client: Client, message: Message):
+    chat_type = message.chat.type
+    if chat_type in ['group', 'supergroup']:
+        await add_served_chats(message.chat.id)
+
+    elif chat_type == 'private':
+        
+        await add_served_users(message.from_user.id)
+                              
     chat_status = status_db.find_one({"chat_id": message.chat.id})
     if chat_status and chat_status.get("status") == "disabled":
         return
@@ -164,7 +171,7 @@ async def chatbot_response(client: Client, message: Message):
 
     if (message.reply_to_message and message.reply_to_message.from_user.id == client.me.id) or not message.reply_to_message:
         await client.send_chat_action(message.chat.id, ChatAction.TYPING)
-
+        await asyncio.sleep(0.1)
         reply_data = await get_reply(message.text if message.text else "")
         
         if reply_data:
