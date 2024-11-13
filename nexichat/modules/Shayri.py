@@ -1,21 +1,19 @@
 import random
 from nexichat.database import get_served_chats
 from pyrogram import Client, filters
-
+import os
 from nexichat import nexichat
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+
 scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
-# Define a dictionary to track the last message timestamp for each user
 user_last_message_time = {}
 user_command_count = {}
-# Define the threshold for command spamming (e.g., 20 commands within 60 seconds)
 SPAM_THRESHOLD = 2
 SPAM_WINDOW_SECONDS = 5
 
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 SHAYRI = [
     " 🌺**बहुत अच्छा लगता है तुझे सताना और फिर प्यार से तुझे मनाना।**🌺 \n\n**🥀Bahut aacha lagta hai tujhe satana Aur fir pyar se tujhe manana.🥀** ",
@@ -63,22 +61,23 @@ night_shayari = [ "🌙 ɢᴏᴏᴅ ɴɪɢʜᴛ! ᴍᴀʏ ʏᴏᴜʀ ᴅʀᴇᴀ
 morning_shayari = [ "🌅 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ᴀꜱ ʙʀɪɢʜᴛ ᴀɴᴅ ᴄʜᴇᴇʀꜰᴜʟ ᴀꜱ ᴛʜᴇ ʀɪꜱɪɴɢ ꜱᴜɴ. ᴀꜱ ʏᴏᴜ ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ, ʟᴇᴛ ᴘᴏꜱɪᴛɪᴠɪᴛʏ ᴀɴᴅ ᴊᴏʏ ꜰɪʟʟ ʏᴏᴜʀ ʜᴇᴀʀᴛ. ᴇᴍʙʀᴀᴄᴇ ᴇᴠᴇʀʏ ᴍᴏᴍᴇɴᴛ ᴡɪᴛʜ ᴀ ꜱᴍɪʟᴇ ᴀɴᴅ ʟᴇᴛ ʏᴏᴜʀ ᴇɴᴛʜᴜꜱɪᴀꜱᴍ ꜱʜɪɴᴇ ᴛʜʀᴏᴜɢʜ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ᴛʜᴇ ᴀʀᴏᴍᴀ ᴏꜰ ꜰʀᴇꜱʜ ᴄᴏꜰꜰᴇᴇ ᴀɴᴅ ᴛʜᴇ ᴘʀᴏᴍɪꜱᴇ ᴏꜰ ᴀ ᴡᴏɴᴅᴇʀꜰᴜʟ ᴅᴀʏ ᴀʜᴇᴀᴅ. ʀɪꜱᴇ ᴀɴᴅ ꜱʜɪɴᴇ, ᴀɴᴅ ᴍᴀᴋᴇ ᴛᴏᴅᴀʏ ᴀᴍᴀᴢɪɴɢ!", "🌞 ʀɪꜱᴇ ᴀɴᴅ ꜱʜɪɴᴇ! ᴀ ɴᴇᴡ ᴅᴀʏ ɪꜱ ʜᴇʀᴇ, ꜰᴜʟʟ ᴏꜰ ᴏᴘᴘᴏʀᴛᴜɴɪᴛɪᴇꜱ ᴀɴᴅ ᴀᴅᴠᴇɴᴛᴜʀᴇꜱ ᴡᴀɪᴛɪɴɢ ꜰᴏʀ ʏᴏᴜ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ʀᴇꜰʀᴇꜱʜɪɴɢ ᴀꜱ ᴀ ᴄᴏᴏʟ ʙʀᴇᴇᴢᴇ ᴀɴᴅ ᴀꜱ ᴠɪʙʀᴀɴᴛ ᴀꜱ ᴀ ʙʟᴏᴏᴍɪɴɢ ꜰʟᴏᴡᴇʀ. ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ ᴡɪᴛʜ ᴀ ꜱᴍɪʟᴇ ᴀɴᴅ ᴀ ʜᴇᴀʀᴛ ꜰᴜʟʟ ᴏꜰ ʜᴏᴘᴇ. ʀᴇᴍᴇᴍʙᴇʀ, ᴇᴠᴇʀʏ ꜱᴜɴʀɪꜱᴇ ɪꜱ ᴀ ɴᴇᴡ ʙᴇɢɪɴɴɪɴɢ, ꜱᴏ ᴍᴀᴋᴇ ᴛʜᴇ ᴍᴏꜱᴛ ᴏꜰ ɪᴛ ᴀɴᴅ ʜᴀᴠᴇ ᴀ ꜰᴀɴᴛᴀꜱᴛɪᴄ ᴅᴀʏ!", "🌄 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ʜᴀᴘᴘɪɴᴇꜱꜱ ᴀɴᴅ ꜱᴜᴄᴄᴇꜱꜱ. ᴀꜱ ʏᴏᴜ ᴏᴘᴇɴ ʏᴏᴜʀ ᴇʏᴇꜱ ᴛᴏ ᴛʜᴇ ɴᴇᴡ ᴅᴀʏ, ʟᴇᴛ ɢᴏ ᴏꜰ ᴀɴʏ ɴᴇɢᴀᴛɪᴠɪᴛʏ ᴀɴᴅ ᴇᴍʙʀᴀᴄᴇ ᴛʜᴇ ᴘᴏꜱɪᴛɪᴠᴇ ᴇɴᴇʀɢʏ ᴀʀᴏᴜɴᴅ ʏᴏᴜ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ʙʀɪɢʜᴛ ᴀɴᴅ ʏᴏᴜʀ ꜱᴘɪʀɪᴛ ʜɪɢʜ. ᴡɪᴛʜ ᴇᴀᴄʜ ꜱᴛᴇᴘ ʏᴏᴜ ᴛᴀᴋᴇ, ᴍᴀʏ ʏᴏᴜ ꜰɪɴᴅ ᴊᴏʏ ᴀɴᴅ ꜰᴜʟꜰɪʟʟᴍᴇɴᴛ. ʜᴀᴠᴇ ᴀ ᴡᴏɴᴅᴇʀꜰᴜʟ ᴅᴀʏ ᴀʜᴇᴀᴅ!", "🌻 ᴡᴀᴋᴇ ᴜᴘ ᴀɴᴅ ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ ᴡɪᴛʜ ᴀ ʜᴇᴀʀᴛ ꜰᴜʟʟ ᴏꜰ ɢʀᴀᴛɪᴛᴜᴅᴇ ᴀɴᴅ ᴀ ꜱᴍɪʟᴇ ᴏɴ ʏᴏᴜʀ ꜰᴀᴄᴇ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ʟᴏᴠᴇʟʏ ᴀꜱ ᴀ ʙᴏᴜQᴜᴇᴛ ᴏꜰ ꜰʀᴇꜱʜ ꜰʟᴏᴡᴇʀꜱ ᴀɴᴅ ᴀꜱ ᴜᴘʟɪꜰᴛɪɴɢ ᴀꜱ ᴀ ᴄʜᴇᴇʀꜰᴜʟ ꜱᴏɴɢ. ᴇᴍʙʀᴀᴄᴇ ᴛʜᴇ ɴᴇᴡ ᴅᴀʏ ᴡɪᴛʜ ᴇɴᴛʜᴜꜱɪᴀꜱᴍ ᴀɴᴅ ʟᴇᴛ ɪᴛ ʙʀɪɴɢ ʏᴏᴜ ᴀʟʟ ᴛʜᴇ ʜᴀᴘᴘɪɴᴇꜱꜱ ᴀɴᴅ ꜱᴜᴄᴄᴇꜱꜱ ʏᴏᴜ ᴅᴇꜱᴇʀᴠᴇ. ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ ᴀɴᴅ ʜᴀᴠᴇ ᴀ ꜰᴀʙᴜʟᴏᴜꜱ ᴅᴀʏ!", "🌞 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ᴊᴏʏ ᴀɴᴅ ᴇxᴄɪᴛᴇᴍᴇɴᴛ. ᴀꜱ ʏᴏᴜ ꜱᴛᴇᴘ ɪɴᴛᴏ ᴛʜᴇ ɴᴇᴡ ᴅᴀʏ, ʟᴇᴛ ʏᴏᴜʀ ᴘᴏꜱɪᴛɪᴠɪᴛʏ ᴀɴᴅ ᴇɴᴇʀɢʏ ꜱʜɪɴᴇ ʙʀɪɢʜᴛʟʏ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ᴠɪʙʀᴀɴᴛ ᴀꜱ ᴀ ꜱᴜɴɴʏ ᴅᴀʏ ᴀɴᴅ ᴀꜱ ʀᴇꜰʀᴇꜱʜɪɴɢ ᴀꜱ ᴀ ᴄᴏᴏʟ ᴅʀɪɴᴋ. ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ ᴡɪᴛʜ ᴀ ꜱᴍɪʟᴇ ᴀɴᴅ ʟᴇᴛ ᴛʜᴇ ᴡᴏʀʟᴅ ꜱᴇᴇ ʏᴏᴜʀ ᴡᴏɴᴅᴇʀꜰᴜʟ ꜱᴘɪʀɪᴛ. ʜᴀᴠᴇ ᴀ ɢʀᴇᴀᴛ ᴅᴀʏ ᴀʜᴇᴀᴅ!", "🌄 ʀɪꜱᴇ ᴀɴᴅ ꜱʜɪɴᴇ! ᴀ ɴᴇᴡ ᴅᴀʏ ɪꜱ ʜᴇʀᴇ, ꜰᴜʟʟ ᴏꜰ ᴘʀᴏᴍɪꜱᴇ ᴀɴᴅ ᴘᴏꜱꜱɪʙɪʟɪᴛɪᴇꜱ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ʙᴇᴀᴜᴛɪꜰᴜʟ ᴀꜱ ᴀ ꜱᴜɴʀɪꜱᴇ ᴀɴᴅ ᴀꜱ ɪɴꜱᴘɪʀɪɴɢ ᴀꜱ ᴀ ɴᴇᴡ ʙᴇɢɪɴɴɪɴɢ. ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ ᴡɪᴛʜ ᴀ ᴘᴏꜱɪᴛɪᴠᴇ ᴍɪɴᴅꜱᴇᴛ ᴀɴᴅ ʟᴇᴛ ʏᴏᴜʀ ᴊᴏʏ ᴀɴᴅ ᴇɴᴛʜᴜꜱɪᴀꜱᴍ ɢᴜɪᴅᴇ ʏᴏᴜ. ᴍᴀʏ ᴛᴏᴅᴀʏ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ᴡᴏɴᴅᴇʀꜰᴜʟ ᴍᴏᴍᴇɴᴛꜱ ᴀɴᴅ ᴀᴍᴀᴢɪɴɢ ᴏᴘᴘᴏʀᴛᴜɴɪᴛɪᴇꜱ. ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ!", "🌻 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ꜱᴜɴꜱʜɪɴᴇ ᴀɴᴅ ʏᴏᴜʀ ʜᴇᴀʀᴛ ᴡɪᴛʜ ʜᴀᴘᴘɪɴᴇꜱꜱ. ᴀꜱ ʏᴏᴜ ʙᴇɢɪɴ ʏᴏᴜʀ ᴅᴀʏ, ʟᴇᴛ ɢᴏ ᴏꜰ ᴀɴʏ ᴡᴏʀʀɪᴇꜱ ᴀɴᴅ ꜰᴏᴄᴜꜱ ᴏɴ ᴛʜᴇ ᴊᴏʏ ᴀɴᴅ ᴇxᴄɪᴛᴇᴍᴇɴᴛ ᴛʜᴀᴛ ʟɪᴇ ᴀʜᴇᴀᴅ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ᴅᴇʟɪɢʜᴛꜰᴜʟ ᴀꜱ ᴀ ꜰʀᴇꜱʜ ᴄᴜᴘ ᴏꜰ ᴄᴏꜰꜰᴇᴇ ᴀɴᴅ ᴀꜱ ᴜᴘʟɪꜰᴛɪɴɢ ᴀꜱ ᴀ ꜰʀɪᴇɴᴅʟʏ ꜱᴍɪʟᴇ. ʀɪꜱᴇ ᴀɴᴅ ꜱʜɪɴᴇ, ᴀɴᴅ ᴍᴀᴋᴇ ᴛᴏᴅᴀʏ ɪɴᴄʀᴇᴅɪʙʟᴇ!", "🌞 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ᴀꜱ ʙʀɪɢʜᴛ ᴀɴᴅ ᴄʜᴇᴇʀꜰᴜʟ ᴀꜱ ʏᴏᴜʀ ꜱᴍɪʟᴇ. ᴀꜱ ʏᴏᴜ ᴏᴘᴇɴ ʏᴏᴜʀ ᴇʏᴇꜱ ᴛᴏ ᴛʜᴇ ɴᴇᴡ ᴅᴀʏ, ʟᴇᴛ ʏᴏᴜʀ ᴘᴏꜱɪᴛɪᴠɪᴛʏ ᴀɴᴅ ᴇɴᴛʜᴜꜱɪᴀꜱᴍ ꜱᴇᴛ ᴛʜᴇ ᴛᴏɴᴇ ꜰᴏʀ ᴛʜᴇ ʜᴏᴜʀꜱ ᴀʜᴇᴀᴅ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ʟᴏᴠᴇ, ʟᴀᴜɢʜᴛᴇʀ, ᴀɴᴅ ᴀʟʟ ᴛʜᴇ ᴛʜɪɴɢꜱ ᴛʜᴀᴛ ᴍᴀᴋᴇ ʏᴏᴜ ʜᴀᴘᴘʏ. ᴇᴍʙʀᴀᴄᴇ ᴛʜᴇ ᴅᴀʏ ᴡɪᴛʜ ᴏᴘᴇɴ ᴀʀᴍꜱ ᴀɴᴅ ᴀ ᴊᴏʏꜰᴜʟ ʜᴇᴀʀᴛ!", "🌄 ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ! ᴍᴀʏ ʏᴏᴜʀ ᴅᴀʏ ʙᴇ ꜰɪʟʟᴇᴅ ᴡɪᴛʜ ᴇɴᴅʟᴇꜱꜱ ᴘᴏꜱꜱɪʙɪʟɪᴛɪᴇꜱ ᴀɴᴅ ᴊᴏʏꜰᴜʟ ᴍᴏᴍᴇɴᴛꜱ. ᴀꜱ ʏᴏᴜ ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ, ʟᴇᴛ ʏᴏᴜʀ ꜱᴘɪʀɪᴛ ꜱᴏᴀʀ ᴀɴᴅ ʏᴏᴜʀ ʜᴇᴀʀᴛ ʙᴇ ʟɪɢʜᴛ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ꜰʀᴇꜱʜ ᴀɴᴅ ɪɴᴠɪɢᴏʀᴀᴛɪɴɢ ᴀꜱ ᴀ ɢᴇɴᴛʟᴇ ʙʀᴇᴇᴢᴇ ᴀɴᴅ ᴀꜱ ʙʀɪɢʜᴛ ᴀꜱ ᴛʜᴇ ꜱᴜɴ. ᴡᴇʟᴄᴏᴍᴇ ᴛʜᴇ ɴᴇᴡ ᴅᴀʏ ᴡɪᴛʜ ᴀ ꜱᴍɪʟᴇ ᴀɴᴅ ʟᴇᴛ ɪᴛ ʙʀɪɴɢ ʏᴏᴜ ᴀʟʟ ᴛʜᴇ ʜᴀᴘᴘɪɴᴇꜱꜱ ʏᴏᴜ ᴅᴇꜱᴇʀᴠᴇ.", "🌞 ʀɪꜱᴇ ᴀɴᴅ ꜱʜɪɴᴇ! ɪᴛ’ꜱ ᴀ ʙʀᴀɴᴅ ɴᴇᴡ ᴅᴀʏ ꜰᴜʟʟ ᴏꜰ ᴏᴘᴘᴏʀᴛᴜɴɪᴛɪᴇꜱ ᴀɴᴅ ᴀᴅᴠᴇɴᴛᴜʀᴇꜱ. ᴍᴀʏ ʏᴏᴜʀ ᴍᴏʀɴɪɴɢ ʙᴇ ᴀꜱ ʟɪᴠᴇʟʏ ᴀꜱ ᴀ ꜱᴜɴʀɪꜱᴇ ᴀɴᴅ ᴀꜱ ɪɴꜱᴘɪʀɪɴɢ ᴀꜱ ᴀ ɴᴇᴡ ʙᴇɢɪɴɴɪɴɢ. ꜱᴛᴀʀᴛ ʏᴏᴜʀ ᴅᴀʏ ᴡɪᴛʜ ᴀ ᴘᴏꜱɪᴛɪᴠᴇ ᴀᴛᴛɪᴛᴜᴅᴇ ᴀɴᴅ ʟᴇᴛ ᴛʜᴇ ᴡᴏʀʟᴅ ꜱᴇᴇ ʏᴏᴜʀ ʙʀɪʟʟɪᴀɴᴄᴇ. ᴍᴀʏ ᴛᴏᴅᴀʏ ʙʀɪɴɢ ʏᴏᴜ ᴊᴏʏ, ꜱᴜᴄᴄᴇꜱꜱ, ᴀɴᴅ ᴀʟʟ ᴛʜᴇ ᴛʜɪɴɢꜱ ᴛʜᴀᴛ ᴍᴀᴋᴇ ʏᴏᴜ ꜱᴍɪʟᴇ. ɢᴏᴏᴅ ᴍᴏʀɴɪɴɢ!", ]
 
 
-# Command
 SHAYRI_COMMAND = ["gf", "bf", "shayri", "sari", "shari", "love"]
 
 
 @nexichat.on_message(filters.command(SHAYRI_COMMAND))
 async def shayri(client: Client, message: Message):
+    from nexichat import CLONE_OWNER
+    print(f"{CLONE_OWNER}")
     await message.reply_text(
         text=random.choice(SHAYRI),
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        "✨𝚂𝚄𝙿𝙿𝙾𝚁𝚃✨", url=f"https://t.me/TG_FRIENDSS"
+                        "✨𝚂𝚄𝙿𝙿𝙾𝚁𝚃✨", url=f"https://t.me/TG_BIO_STYLE"
                     ),
                     InlineKeyboardButton(
-                        "✨𝙾𝙵𝙵𝙸𝙲𝙴✨", url=f"https://t.me/ll_MOI_ll"
+                        "✨𝙾𝙵𝙵𝙸𝙲𝙴✨", url=f"https://t.me/TG_BIO_STYLE"
                     ),
                 ]
             ]
@@ -98,7 +97,7 @@ add_buttons = InlineKeyboardMarkup(
     ]
 )
 
-# Function to send a "Good Night" message
+
 async def send_good_night():
     chats = []
     schats = await get_served_chats()
@@ -116,9 +115,7 @@ async def send_good_night():
                 reply_markup=add_buttons,
             )
         except Exception as e:
-            print(f"[bold red] Unable to send Good Night message to Group {chat_id} - {e}")
-
-scheduler.add_job(send_good_night, trigger="cron", hour=23, minute=59)
+            continue
 
 async def send_good_morning():
     chats = []
@@ -137,7 +134,17 @@ async def send_good_morning():
                 reply_markup=add_buttons,
             )
         except Exception as e:
-            print(f"[bold red] Unable to send Good Morning message to Group {chat_id} - {e}")
+            continue
 
-scheduler.add_job(send_good_morning, trigger="cron", hour=6, minute=1)
+async def restart_nexichat():
+    os.system(f"kill -9 {os.getpid()} && bash start")
+
+scheduler.add_job(send_good_night, trigger="cron", hour=23, minute=50)
+scheduler.add_job(send_good_morning, trigger="cron", hour=6, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=0, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=7, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=12, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=15, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=18, minute=0)
+scheduler.add_job(restart_nexichat, trigger="cron", hour=21, minute=0)
 scheduler.start()
